@@ -15,8 +15,8 @@ public class MetricsController {
     @GetMapping("/metricsstart")
     public String metrics() {
         try {
-            hadoopService.updateDirectorySizes("/");
-            hadoopService.updateMetrics();
+            hadoopService.updateDirectorySizes();
+            hadoopService.generatePrometheusMetrics();
         } catch (IOException | URISyntaxException e) {
             return "Metrics error" + e.getMessage();
         }

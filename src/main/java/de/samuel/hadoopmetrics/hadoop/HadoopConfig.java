@@ -13,6 +13,8 @@ public class HadoopConfig {
 
     @Value("${hadoop.defaultFS}")
     private String defaultFS;
+    @Value("${hadoop.directoryPath}")
+    public String directoryPath;
     
     @Bean
     public FileSystem fileSystem() throws IOException {

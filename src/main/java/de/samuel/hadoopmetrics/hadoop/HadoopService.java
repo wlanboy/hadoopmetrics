@@ -22,27 +22,31 @@ public class HadoopService {
     private FileSystem fileSystem;
 
     @Autowired
+    private HadoopConfig config;
+
+    @Autowired
     private MeterRegistry meterRegistry;
 
     private Map<String, Long> directorySizes = new HashMap<>();
 
     @Scheduled(fixedRate = 3600000) //every hour
-    public void updateMetrics() throws IOException, URISyntaxException {
-        updateDirectorySizes("/");
+    private void updateMetrics() throws IOException, URISyntaxException {
+        updateDirectorySizes();
         generatePrometheusMetrics();
     }
 
-    public void updateDirectorySizes(String directoryPath) throws IOException, URISyntaxException {
-        FileStatus[] fileStatuses = fileSystem.listStatus(new Path(directoryPath));
+    public void updateDirectorySizes() throws IOException, URISyntaxException {
+        FileStatus[] fileStatuses = fileSystem.listStatus(new Path(config.directoryPath));
         for (FileStatus status : fileStatuses) {
             if (status.isDirectory()) {
                 URI uri = new URI(status.getPath().toString());
-                directorySizes.put(uri.getPath(), status.getLen());
+                Long size = fileSystem.getContentSummary(status.getPath()).getLength();
+                directorySizes.put(uri.getPath(), size);
             }
         }
     }
 
-    private void generatePrometheusMetrics() {
+    public void generatePrometheusMetrics() {
         directorySizes.forEach((path, size) -> 
             meterRegistry.gauge("hadoop.directory.size." + path, size)
         );
